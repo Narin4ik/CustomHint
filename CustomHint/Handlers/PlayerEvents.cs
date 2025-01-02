@@ -1,4 +1,4 @@
-﻿using Exiled.API.Features;
+using Exiled.API.Features;
 using Exiled.Events.EventArgs.Player;
 
 namespace CustomHint.Handlers
@@ -17,6 +17,20 @@ namespace CustomHint.Handlers
                 Plugin.Instance.SaveHiddenHudPlayers();
                 Log.Debug($"Player {player.Nickname} ({player.UserId}) has DNT enabled and was removed from HiddenHudPlayers.");
             }
+        }
+        public void OnChangingRole(ChangingRoleEventArgs ev)
+        {
+            UpdatePlayerHud(ev.Player);
+        }
+
+        public void OnSpawning(SpawningEventArgs ev)
+        {
+            UpdatePlayerHud(ev.Player);
+        }
+
+        private void UpdatePlayerHud(Player player)
+        {
+            UpdatePlayerHud(player);
         }
     }
 }
