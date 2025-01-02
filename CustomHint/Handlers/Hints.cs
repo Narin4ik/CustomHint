@@ -4,9 +4,12 @@ using System.IO;
 using System.Linq;
 using MEC;
 using Exiled.API.Features;
-using PlayerRoles;
 using PlayerRoles.PlayableScps.Scp079;
 using CustomHint.API;
+using HintServiceMeow.Core.Enum;
+using HintServiceMeow.Core.Utilities;
+using HintServiceMeow.Core.Models.Hints;
+using PlayerRoles;
 
 namespace CustomHint.Handlers
 {
@@ -15,6 +18,7 @@ namespace CustomHint.Handlers
         private CoroutineHandle _hintUpdaterCoroutine;
         private Queue<string> randomizedHints = new Queue<string>();
         private List<string> hints = new List<string>();
+        private DynamicHint _cachedHint;
 
         public void LoadHints()
         {
@@ -49,20 +53,10 @@ namespace CustomHint.Handlers
             {
                 foreach (var player in Player.List)
                 {
-                    if (player.Role.Type == RoleTypeId.Spectator ||
-                        (!Plugin.Instance.Config.ExcludedRoles.Contains(RoleTypeId.Overwatch) &&
-                         player.Role.Type == RoleTypeId.Overwatch))
-                    {
-                        if (Plugin.Instance.Config.HintForSpectatorsIsEnabled)
-                        {
-                            DisplayHintForSpectators(player, Round.ElapsedTime);
-                        }
-                    }
-                    else if (!Plugin.Instance.Config.ExcludedRoles.Contains(player.Role.Type) &&
-                             !Plugin.Instance.HiddenHudPlayers.Contains(player.UserId))
-                    {
-                        DisplayHint(player, Round.ElapsedTime);
-                    }
+                    if (Plugin.Instance.HiddenHudPlayers.Contains(player.UserId))
+                        continue;
+
+                    Plugin.Instance.Hints.UpdatePlayerHud(player);
                 }
 
                 yield return Timing.WaitForSeconds(0.5f);
@@ -132,7 +126,7 @@ namespace CustomHint.Handlers
                 message = message.Replace(placeholder.Key, placeholder.Value(player, roundDuration));
             }
 
-            foreach (var placeholder in PlaceholderManager.GetAllPlaceholders())
+            foreach (var placeholder in PlaceholderManager.GetAllGlobalPlaceholders())
             {
                 if (CorePlaceholders.ContainsKey(placeholder.Key))
                     continue;
@@ -141,36 +135,48 @@ namespace CustomHint.Handlers
                 message = message.Replace(placeholder.Key, value ?? string.Empty);
             }
 
+            foreach (var placeholder in PlaceholderManager.GetAllPlayerPlaceholders())
+            {
+                if (CorePlaceholders.ContainsKey(placeholder.Key))
+                    continue;
+
+                var value = placeholder.Value.Invoke(player);
+                message = message.Replace(placeholder.Key, value ?? string.Empty);
+            }
+
             return message;
         }
 
-        private void DisplayHint(Player player, TimeSpan roundDuration)
+        public void UpdatePlayerHud(Player player)
         {
-            if (!Plugin.Instance.Config.GameHint)
+            var playerDisplay = PlayerDisplay.Get(player);
+            if (playerDisplay == null)
+            {
+                Log.Error($"PlayerDisplay is null for {player.Nickname}. Ensure HintServiceMeow is initialized properly.");
                 return;
+            }
 
-            string hintMessage;
-            if (roundDuration.TotalSeconds <= 60)
-                hintMessage = Plugin.Instance.Translation.HintMessageUnderMinute;
-            else if (roundDuration.TotalMinutes < 60)
-                hintMessage = Plugin.Instance.Translation.HintMessageUnderHour;
-            else
-                hintMessage = Plugin.Instance.Translation.HintMessageOverHour;
+            if (Plugin.Instance.Config.Huds == null || !Plugin.Instance.Config.Huds.Any())
+            {
+                Log.Warn("No HUDs configured in the plugin.");
+                return;
+            }
 
-            hintMessage = ReplacePlaceholders(hintMessage, player, roundDuration);
+            foreach (var hud in Plugin.Instance.Config.Huds)
+            {
+                if (hud.Roles == null || !hud.Roles.Contains(player.Role.Type))
+                    continue;
 
-            hintMessage = Plugin.ReplaceColorsInString(hintMessage);
-            player.ShowHint(hintMessage, 1.5f);
-        }
+                var dynamicHint = new DynamicHint
+                {
+                    AutoText = _ => ReplacePlaceholders(hud.Text, player, TimeSpan.Zero),
+                    TargetX = hud.Position.PositionX,
+                    TargetY = hud.Position.PositionY,
+                    SyncSpeed = HintSyncSpeed.Fast
+                };
 
-        private void DisplayHintForSpectators(Player player, TimeSpan roundDuration)
-        {
-            string hintMessage = Plugin.Instance.Translation.HintMessageForSpectators;
-
-            hintMessage = ReplacePlaceholders(hintMessage, player, roundDuration);
-
-            hintMessage = Plugin.ReplaceColorsInString(hintMessage);
-            player.ShowHint(hintMessage, 1.5f);
+                playerDisplay.AddHint(dynamicHint);
+            }
         }
 
         private static string GetColoredRoleName(Player player)
