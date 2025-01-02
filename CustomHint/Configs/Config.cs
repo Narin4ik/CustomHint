@@ -40,12 +40,31 @@ namespace CustomHint.Configs
         [Description("Enable counting Overwatch players in placeholder {spectators_num}.")]
         public bool EnableOverwatchCounting { get; set; } = true;
 
-        [Description("Ignored roles.")]
-        public List<RoleTypeId> ExcludedRoles { get; set; } = new List<RoleTypeId>
-        {
-            RoleTypeId.Overwatch,
-            RoleTypeId.Filmmaker,
-            RoleTypeId.Scp079
-        };
+        [Description("List of custom HUD configurations.")]
+        public List<CustomHud> Huds { get; set; } = new();
+    }
+
+    public class CustomHud
+    {
+        [Description("HUD text with placeholders.")]
+        public string Text { get; set; }
+
+        [Description("Can this HUD be hidden by the .hidehud command?")]
+        public bool CanBeHidden { get; set; }
+
+        [Description("Roles to which this HUD will be displayed.")]
+        public List<RoleTypeId> Roles { get; set; } = new();
+
+        [Description("HUD position settings.")]
+        public HudPosition Position { get; set; } = new();
+    }
+
+    public class HudPosition
+    {
+        [Description("X position of the HUD.")]
+        public float PositionX { get; set; } = 0f;
+
+        [Description("Y position of the HUD.")]
+        public float PositionY { get; set; } = 500f;
     }
 }
