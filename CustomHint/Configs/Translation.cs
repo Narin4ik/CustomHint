@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Exiled.API.Interfaces;
 using PlayerRoles;
@@ -7,18 +7,6 @@ namespace CustomHint.Configs
 {
     public class Translation : ITranslation
     {
-        [Description("Hint message for spectators.")]
-        public string HintMessageForSpectators { get; set; } = "<size=75%>{servername}\n{ip}:{port}\n\n{player_nickname}, spec, duration: {round_duration_hours}:{round_duration_minutes}:{round_duration_seconds}.\nRole: {player_role}\nTPS: {tps}/60\n\nInformation:\nClass-D personnel: {classd_num} || Scientists: {scientist_num} || Facility Guards: {facilityguard_num} || MTF: {mtf_num} || CI: {ci_num} || SCPs: {scp_num} || Spectators: {spectators_num}\nGenerators activated: {generators_activated}/{generators_max}\n\n{hints}</size>";
-
-        [Description("Hint message for rounds lasting up to 59 seconds.")]
-        public string HintMessageUnderMinute { get; set; } = "<size=75%>{servername}\n{ip}:{port}\n\nQuick start! {player_nickname}, round time: {round_duration_seconds}s.\nGame Role: {player_gamerole} || Server Role: {player_role}\nTPS: {tps}/60</size>\n\nReal time: {current_time}";
-
-        [Description("Hint message for rounds lasting from 1 to 59 min & 59 sec")]
-        public string HintMessageUnderHour { get; set; } = "<size=75%>{servername}\n{ip}:{port}\n\nStill going, {player_nickname}! Time: {round_duration_minutes}:{round_duration_seconds}.\nGame Role: {player_gamerole} || Server Role: {player_role}\nTPS: {tps}/60</size>\n\nReal time: {current_time}";
-
-        [Description("Hint message for rounds lasting 1 hour or more.")]
-        public string HintMessageOverHour { get; set; } = "<size=75%>{servername}\n{ip}:{port}\n\nLong run, {player_nickname}! Duration: {round_duration_hours}:{round_duration_minutes}:{round_duration_seconds}.\nGame Role: {player_gamerole} || Server Role: {player_role}\nTPS: {tps}/60</size>\n\nReal time: {current_time}";
-
         [Description("Message displayed when the HUD is successfully hidden.")]
         public string HideHudSuccessMessage { get; set; } = "<color=green>You have successfully hidden the server HUD! To get the HUD back, use .showhud</color>";
 
